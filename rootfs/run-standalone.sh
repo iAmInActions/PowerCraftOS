@@ -1,0 +1,1 @@
+qemu-system-ppc -L pc-bios -boot c -prom-env "boot-device=hd:,\yaboot" -prom-env "boot-args=conf=hd:,\yaboot.conf" -M mac99,via=pmu -m 1024 -g 800x600x32 -net nic,model=rtl8139 -net user -hda ./rootfs.img
