@@ -1,0 +1,1 @@
+mkisofs -r -U -chrp-boot -hfs -part -hfs-bless ./bootcd-root/ -o boot.iso ./bootcd-root/

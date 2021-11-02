@@ -1,0 +1,63 @@
+    cp -f ppc/early.cfg "$GRUB_DIR"
+    cp -f ppc/grub.cfg.in "$GRUB_DIR"/grub.cfg
+    sed -i \
+        -e "s|@@KERNVER@@|${KERNELVERSION}|" \
+        -e "s|@@KERNVER_ALT@@|${ALTKERNELVERSION}|" \
+        -e "s|@@KEYMAP@@|${KEYMAP}|" \
+        -e "s|@@ARCH@@|$BASE_ARCH|" \
+        -e "s|@@BOOT_TITLE@@|${BOOT_TITLE}|" \
+        -e "s|@@BOOT_CMDLINE@@|${BOOT_CMDLINE}|" \
+        -e "s|@@LOCALE@@|${LOCALE}|" "$GRUB_DIR"/grub.cfg
+    if [ -z "$ALTKERNELVERSION" ]; then
+        # remove the alt kernel sections
+        sed -i '/^# alt kernel/,$ d' "$GRUB_DIR"/grub.cfg
+    fi
+
+    cp -a "$IMAGEDIR"/boot "$VOIDHOSTDIR"
+    xbps-uchroot "$VOIDHOSTDIR" grub-mkimage -- \
+        --verbose \
+        --config="boot/grub/early.cfg" \
+        --prefix="boot/grub" \
+        --directory="/usr/lib/grub/powerpc-ieee1275" \
+        --format="powerpc-ieee1275" \
+        --output="/tmp/grub.img" \
+        boot btrfs datetime disk ext2 gfxmenu help hfs hfsplus ieee1275_fb \
+        iso9660 jfs ls luks lvm macbless macho nilfs2 ofnet part_apple \
+        part_gpt part_msdos png scsi search xfs linux reboot gfxterm \
+        gfxterm_background gfxterm_menu
+    if [ $? -ne 0 ]; then
+        die "Failed to generate GRUB image"
+    fi
+
+    # required stuff
+    rm -f "$GRUB_DIR"/early.cfg
+    cp -f "$VOIDHOSTDIR"/tmp/grub.img "$BOOT_DIR"
+    cp -f ppc/ofboot.b "$BOOT_DIR"
+    cp -f ppc/ofboot.b "${BOOT_DIR}/bootinfo.txt"
+    # fix CHRP
+    mkdir -p "${IMAGEDIR}/ppc"
+    cp -f "${BOOT_DIR}/bootinfo.txt" "${IMAGEDIR}/ppc"
+    # volume icons for mac
+    cp -f ppc/Void.icns "${IMAGEDIR}/Icon"
+    cp -f ppc/Void.icns "${IMAGEDIR}/.VolumeIcon.icns"
+
+    if [ -n "$HAVE_YABOOT" ]; then
+        mkdir -p "$IMAGEDIR"/etc
+        cp -f "$VOIDHOSTDIR"/usr/lib/yaboot/yaboot "$BOOT_DIR"
+        cp -f ppc/yaboot.msg.in "$BOOT_DIR"/yaboot.msg
+        cp -f ppc/yaboot.conf.in "$IMAGEDIR"/etc/yaboot.conf
+        sed -i \
+            -e "s|@@KERNVER@@|${KERNELVERSION}|" \
+            -e "s|@@KERNVER_ALT@@|${ALTKERNELVERSION}|" \
+            -e "s|@@ARCH@@|$BASE_ARCH|" \
+            -e "s|@@BOOT_TITLE@@|${BOOT_TITLE}|" "$BOOT_DIR"/yaboot.msg
+        sed -i \
+            -e "s|@@KEYMAP@@|${KEYMAP}|" \
+            -e "s|@@BOOT_CMDLINE@@|${BOOT_CMDLINE}|" \
+            -e "s|@@LOCALE@@|${LOCALE}|" "$IMAGEDIR"/etc/yaboot.conf
+        if [ -z "$ALTKERNELVERSION" ]; then
+            # remove the alt kernel sections
+            sed -i '/^livealt/d' "$BOOT_DIR"/yaboot.msg
+            sed -i '/^# alt kernel/,$ d' "$IMAGEDIR"/etc/yaboot.conf
+        fi
+    fi
