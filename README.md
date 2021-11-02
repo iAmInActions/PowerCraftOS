@@ -1,6 +1,10 @@
 # PowerCraftOS
 A USB/CD linux distro specifically designed for running Minecraft: Java Edition on PowerPC computers ranging from the g3 imac all the way to the quad g5 mac pro.
 
+Root and user password are `powercraft`
+
+The launcher is offline only at the moment and only takes user names (it has an email and pass filed but the email field should only be used for user names and the pass field is left ignored
+
 ## IMPORTANT!
 Project is on hold for now due to IRL stuff.
 
